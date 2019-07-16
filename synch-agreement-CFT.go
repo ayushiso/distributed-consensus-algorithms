@@ -41,10 +41,26 @@ func Agreement(n, t int) {
 
 	for i := 0; i <= t; i++ {
 
+		numDropped := 0
+
+		// erase messages of all students who dropped during last round
+		for i := range studentPool {
+			if messages[i][0] != 0 && studentPool[i].drop {
+				for j := range messages[i] {
+					messages[i][j] = 0
+				}
+			}
+
+			if studentPool[i].drop {
+				numDropped++
+			}
+		}
+
 		// choose how many students are going to drop
-		numDrops := rand.Intn(t + 1)
+		numDrops := rand.Intn(t - numDropped + 1)
+		fmt.Println(numDrops)
 		// choose which students are going to drop
-		dropList := randNums(n, numDrops)
+		dropList := randNums(n, numDrops, studentPool)
 		fmt.Println(dropList)
 
 		for j := range studentPool {
@@ -72,13 +88,14 @@ func Agreement(n, t int) {
 }
 
 // randNums chooses num random numbers in range (0, n] and returns a dict of the chosen numbers
-func randNums(length int, num int) map[int]bool {
+func randNums(length int, num int, studentPool []Student) map[int]bool {
 	randNums := make(map[int]bool)
 	i := 0
 
 	for i < num {
 		newNum := rand.Intn(length)
-		if randNums[newNum] { //number has already been added to dropList
+		//fmt.Println(newNum)
+		if randNums[newNum] || studentPool[i].drop == true { //number has already been added to dropList, or this was dropped in previous rounds
 			continue
 		}
 		randNums[newNum] = true
@@ -99,7 +116,7 @@ func writeMessage(j int, studentPool []Student, messages [][]int) {
 
 		for i := range messages[j] {
 			if i >= dropIndex {
-				break
+				messages[j][i] = 0
 			} else {
 				messages[j][i] = studentPool[j].message
 			}
