@@ -13,7 +13,6 @@ func main() {
 
 type Student struct {
 	message  int
-	drop     bool
 	willdrop bool
 }
 
@@ -25,61 +24,66 @@ func Agreement(n, t int) {
 		messages[i] = make([]int, n)
 	}
 
-	studentPool := make([]Student, n)
+	studentPool := make(map[int]Student)
 
-	//initialize student initial messages
-	for i := range studentPool {
-		studentPool[i].message = rand.Intn(100) + 1
-		studentPool[i].drop = false
-		studentPool[i].willdrop = false
-		//fmt.Println(i, studentPool[i])
+	for i := 0; i < n; i++ {
+		var student Student
+		student.message = rand.Intn(100) + 1
+		student.willdrop = false
+		studentPool[i] = student
 	}
 
-	// for i := range studentPool {
-	// 	fmt.Println(studentPool[i])
-	// }
+	for i := range studentPool {
+		//fmt.Println("HI")
+		fmt.Println(studentPool[i])
+	}
 
 	for i := 0; i <= t; i++ {
 
-		numDropped := 0
-
-		// erase messages of all students who dropped during last round
-		for i := range studentPool {
-			if messages[i][0] != 0 && studentPool[i].drop {
-				for j := range messages[i] {
-					messages[i][j] = 0
+		// // erase messages of all students who dropped during last round
+		for j := range messages {
+			if messages[j][0] != 0 {
+				_, exists := studentPool[j]
+				if !exists {
+					for k := range messages[j] {
+						messages[j][k] = 0
+					}
 				}
-			}
-
-			if studentPool[i].drop {
-				numDropped++
 			}
 		}
 
 		// choose how many students are going to drop
-		numDrops := rand.Intn(t - numDropped + 1)
-		fmt.Println(numDrops)
+		numDrops := rand.Intn(min(t, len(studentPool)))
+		fmt.Println("numDrops=", numDrops)
+
 		// choose which students are going to drop
+
 		dropList := randNums(n, numDrops, studentPool)
-		fmt.Println(dropList)
+
+		// writing step (GOROUTINE?)
 
 		for j := range studentPool {
-			//fmt.Println(student.message)
 
-			if !studentPool[j].drop {
-				if dropList[j] {
-					studentPool[j].willdrop = true
-				}
-
-				writeMessage(j, studentPool, messages)
+			if len(studentPool) == 0 {
+				break
 			}
+
+			if dropList[j] {
+				student := studentPool[j]
+				student.willdrop = true
+				studentPool[j] = student
+			}
+
+			writeMessage(j, studentPool, messages)
 		}
+
+		// choosing step (GOROUTINE?)
 
 		for j := range studentPool {
 			//fmt.Println(studentPool[j].drop)
-			if !studentPool[j].drop {
-				studentPool[j].message = chooseMessage(j, messages)
-			}
+			student := studentPool[j]
+			student.message = chooseMessage(j, messages)
+			studentPool[j] = student
 		}
 
 		printArray(messages)
@@ -88,14 +92,15 @@ func Agreement(n, t int) {
 }
 
 // randNums chooses num random numbers in range (0, n] and returns a dict of the chosen numbers
-func randNums(length int, num int, studentPool []Student) map[int]bool {
+func randNums(length int, num int, studentPool map[int]Student) map[int]bool {
 	randNums := make(map[int]bool)
 	i := 0
 
 	for i < num {
 		newNum := rand.Intn(length)
 		//fmt.Println(newNum)
-		if randNums[newNum] || studentPool[i].drop == true { //number has already been added to dropList, or this was dropped in previous rounds
+		_, exists := studentPool[newNum]
+		if randNums[newNum] || exists == false { //number has already been added to dropList, or this was dropped in previous rounds
 			continue
 		}
 		randNums[newNum] = true
@@ -105,11 +110,10 @@ func randNums(length int, num int, studentPool []Student) map[int]bool {
 	return randNums
 }
 
-func writeMessage(j int, studentPool []Student, messages [][]int) {
+func writeMessage(j int, studentPool map[int]Student, messages [][]int) {
 
 	// student will drop out in this round at some point
 	if studentPool[j].willdrop {
-		studentPool[j].drop = true
 
 		//at what time will this student drop?
 		dropIndex := rand.Intn(len(messages))
@@ -117,6 +121,7 @@ func writeMessage(j int, studentPool []Student, messages [][]int) {
 		for i := range messages[j] {
 			if i >= dropIndex {
 				messages[j][i] = 0
+				delete(studentPool, j)
 			} else {
 				messages[j][i] = studentPool[j].message
 			}
@@ -160,4 +165,11 @@ func printArray(arr [][]int) {
 	for elems := range arr {
 		fmt.Println(arr[elems])
 	}
+}
+
+func min(a int, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
