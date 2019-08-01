@@ -11,11 +11,9 @@ import (
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
-	//l := 10000
-	//simulateByz(l)
-	decisions := Byz(10000, 3000)
-	// fmt.Println(decisions)
-	writeTable(decisions, "loyal-10000-traitors-3000.tsv")
+	l := 10000
+	simulateByz(l)
+	simulateMovies(n)
 }
 
 func simulateByz(l int) {
