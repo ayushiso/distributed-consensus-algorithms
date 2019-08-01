@@ -65,6 +65,6 @@ cat_2 = "dropped"
 #print(counts)
 plt.plot(new_matrix)
 plt.xlabel("Rounds")
-plt.ylabel("Counts")
+plt.ylabel("Proportions")
 plt.title("{} = {}, {} = {}".format(cat_1, cat_2, n ,t))
 plt.savefig(infile[:-3] + "png")
